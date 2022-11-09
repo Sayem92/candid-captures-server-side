@@ -52,7 +52,16 @@ async function run() {
             const review = req.body;
             const result = await reviewsCollection.insertOne(review)
             res.send(result)
-        })
+        });
+
+        //details service-------
+        app.get('/getReview/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { reviewId : id }
+            const cursor =  reviewsCollection.find(query)
+            const review = await cursor.toArray();
+            res.send(review)
+        });
 
 
     }
