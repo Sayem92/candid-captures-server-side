@@ -84,6 +84,15 @@ async function run() {
         });
 
 
+        // delete myReview api----------
+        app.delete('/myReviews/:id',  async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) }
+            const result = await reviewsCollection.deleteOne(query)
+            res.send(result)
+           
+        })
+
 
     }
     catch (err) {
