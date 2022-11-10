@@ -63,6 +63,14 @@ async function run() {
             res.send(review)
         });
 
+        // add new service mongo------
+        app.post('/addNewService', async (req, res) => {
+            const newService = req.body;
+            const result = await photographerCollection.insertOne(newService)
+            res.send(result)
+        });
+
+        
 
     }
     catch (err) {
