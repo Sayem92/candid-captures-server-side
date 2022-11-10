@@ -15,6 +15,23 @@ app.use(express.json())
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.lhckmem.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
+// verify token jwt----------------
+function verifyJwt(req, res, next) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).send({ message: "unauthorized access" })
+    }
+    const token = authHeader.split(' ')[1];
+   
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function(err, decoded){
+        if(err){
+            return res.status(401).send({ message: "forbidden access" })
+        }
+        req.decoded = decoded;
+        next();
+    })
+}
+
 
 async function run() {
     try {
@@ -22,6 +39,14 @@ async function run() {
         const photographerCollection = client.db("Photographer").collection("services");
         const reviewsCollection = client.db("Photographer").collection("reviews");
 
+
+         //jwt token---------------------
+         app.post('/jwt', (req, res) => {
+            const user = req.body;
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1d' });
+            // sudu token ole kicu bujba na tai json a pataw { } di
+            res.send({ token })
+        })
 
         // get 3 services data mongo--------
         app.get('/services', async (req, res) => {
@@ -71,7 +96,7 @@ async function run() {
         });
 
         //my reviews all get-------
-        app.get('/myReviews', async (req, res) => {
+        app.get('/myReviews', verifyJwt, async (req, res) => {
             let query = {}
             if (req.query.email) {
                 query = {
