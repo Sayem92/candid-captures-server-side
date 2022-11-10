@@ -70,7 +70,20 @@ async function run() {
             res.send(result)
         });
 
-        
+        //my reviews all get-------
+        app.get('/myReviews', async (req, res) => {
+            let query = {}
+            if (req.query.email) {
+                query = {
+                    email: req.query.email
+                }
+            }
+            const cursor =  reviewsCollection.find(query)
+            const myReviews = await cursor.toArray();
+            res.send(myReviews)
+        });
+
+
 
     }
     catch (err) {
