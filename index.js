@@ -1,7 +1,8 @@
+require('dotenv').config()
 const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-require('dotenv').config()
+const jwt = require('jsonwebtoken')
 
 const app = express()
 const port = process.env.PORT || 5000;
@@ -15,22 +16,22 @@ app.use(express.json())
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.lhckmem.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
-// // verify token jwt----------------
-// function verifyJwt(req, res, next) {
-//     const authHeader = req.headers.authorization;
-//     if (!authHeader) {
-//         return res.status(401).send({ message: "unauthorized access" })
-//     }
-//     const token = authHeader.split(' ')[1];
+// verify token jwt----------------
+function verifyJwt(req, res, next) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).send({ message: "unauthorized access" })
+    }
+    const token = authHeader.split(' ')[1];
    
-//     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function(err, decoded){
-//         if(err){
-//             return res.status(401).send({ message: "forbidden access" })
-//         }
-//         req.decoded = decoded;
-//         next();
-//     })
-// }
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function(err, decoded){
+        if(err){
+            return res.status(401).send({ message: "forbidden access" })
+        }
+        req.decoded = decoded;
+        next();
+    })
+}
 
 
 async function run() {
@@ -40,13 +41,16 @@ async function run() {
         const reviewsCollection = client.db("Photographer").collection("reviews");
 
 
-        //  //jwt token---------------------
-        //  app.post('/jwt', (req, res) => {
-        //     const user = req.body;
-        //     const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1d' });
-        //     // sudu token ole kicu bujba na tai json a pataw { } di
-        //     res.send({ token })
-        // })
+         //jwt token---------------------
+         app.post('/jwt', (req, res) => {
+            const user = req.body;
+            console.log(user);
+       
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '10d' });
+           
+            console.log(token);
+            res.send({ token })
+        })
 
         // get 3 services data mongo--------
         app.get('/services', async (req, res) => {
@@ -96,7 +100,7 @@ async function run() {
         });
 
         //my reviews all get-------
-        app.get('/myReviews', async (req, res) => {
+        app.get('/myReviews', verifyJwt, async (req, res) => {
             let query = {}
             if (req.query.email) {
                 query = {
